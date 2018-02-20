@@ -24,6 +24,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <map>
 
 /// @brief Structure used to manage a row of the table.
 class TableRow :
@@ -138,23 +139,42 @@ public:
 class Table
 {
 public:
-    /// @brief Constructor.
-    Table() = default;
+    enum SymbolType
+    {
+        HorizontalDivider,
+        VerticalDivider,
+        Crossings,
+    };
 
     /// @brief Constructor.
-    /// @param _title The title of the table.
-    explicit Table(std::string _title) :
-        title(std::move(_title)),
+    explicit Table() :
         columns(),
         rows(),
-        marginSize()
+        marginSize(),
+        symbols()
     {
-        // Nothing to do.
+        // Set the default symbols.
+        this->setDefaultSymbols();
     }
 
+    /// @brief Allows to set the margins.
     inline void setMarginSize(std::string::size_type const & s)
     {
         marginSize = s;
+    }
+
+    /// @brief Allows to set a character to use for a specific place.
+    inline void setSymbol(SymbolType type, char symbol)
+    {
+        symbols[type] = symbol;
+    }
+
+    /// @brief Sets the default the symbols.
+    inline void setDefaultSymbols()
+    {
+        symbols[HorizontalDivider] = '-';
+        symbols[VerticalDivider] = '|';
+        symbols[Crossings] = '+';
     }
 
     /// @brief Allows to add a column.
@@ -208,16 +228,18 @@ public:
         }
     }
 
+    /// @brief Adds the column headers.
     inline void addColumnHeaders()
     {
         TableRow new_row;
-        for (auto it = columns.begin(); it != columns.end(); ++it)
+        for (auto const & column : columns)
         {
-            new_row.emplace_back((*it).getTitle());
+            new_row.emplace_back(column.getTitle());
         }
         rows.emplace_back(new_row);
     }
 
+    /// @brief Adds a divider.
     inline void addDivider()
     {
         TableRow new_row;
@@ -225,6 +247,7 @@ public:
         rows.emplace_back(new_row);
     }
 
+    /// @brief Adds an header with the given text.
     inline void addHeader(std::string header)
     {
         TableRow new_row;
@@ -244,37 +267,51 @@ public:
     /// @return The table.
     std::string getTable()
     {
-        std::string margin = (marginSize > 0) ? std::string(marginSize, ' ')
-                                              : "";
+        auto margin = std::string(marginSize, ' ');
+        auto hdiv = symbols[HorizontalDivider];
+        auto vdiv = symbols[VerticalDivider];
+        auto cross = symbols[Crossings];
 
         std::stringstream ss;
-        for (auto const & row : rows)
+        for (auto row_it = rows.begin(); row_it != rows.end(); ++row_it)
         {
+            auto row = (*row_it);
             if (row.isDivider())
             {
-                ss << "#";
-                for (auto const & column : columns)
+                ss << cross;
+                if ((row_it == rows.begin()) ||
+                    (std::next(row_it) == rows.end()))
                 {
-                    ss << std::string(column.width, '-');
-                    ss << std::string(marginSize * 2, '-');
-                    ss << "#";
+                    ss << std::string(
+                        this->getTotalWidth()
+                        + (marginSize * 2 + 1) * (columns.size() - 1),
+                        hdiv);
+                    ss << cross;
+                }
+                else
+                {
+                    for (auto column : columns)
+                    {
+                        ss << std::string(column.width + marginSize * 2, hdiv)
+                           << cross;
+                    }
                 }
                 ss << "\n";
                 continue;
             }
             if (row.isHeader())
             {
-                ss << "#";
+                ss << vdiv;
                 ss << margin;
                 ss << std::setw(this->getTotalWidth()
                                 + (marginSize * 2 + 1) * (columns.size() - 1));
                 ss << std::right << align::centtered(row[0]);
                 ss << margin;
-                ss << "#";
+                ss << vdiv;
                 ss << "\n";
                 continue;
             }
-            ss << "#";
+            ss << vdiv;
             for (size_t i = 0; i < row.size(); ++i)
             {
                 auto const & column = columns[i];
@@ -293,13 +330,17 @@ public:
                     ss << std::right << align::centtered(row[i]);
                 }
                 ss << margin;
-                ss << "#";
+                ss << vdiv;
             }
             ss << "\n";
         }
         return ss.str();
     }
 
+    /// @brief Wraps the given text.
+    /// @param in    The input text.
+    /// @param width The width of the desired text.
+    /// @return The wrapped lines of the original text.
     std::vector<std::string> textWrap(std::string const & in,
                                       std::string::size_type const & width)
     {
@@ -342,6 +383,7 @@ private:
         return totalWidth;
     }
 
+    /// @brief Splits the given string.
     std::vector<std::string> splitString(
         const std::string & source,
         const std::string & delimiter)
@@ -361,12 +403,12 @@ private:
         return result;
     }
 
-    /// Title of the table.
-    std::string title;
     /// List of columns of the table.
     std::vector<TableColumn> columns;
     /// List of rows of the table.
     std::vector<TableRow> rows;
     /// The internal margins.
     std::string::size_type marginSize;
+    /// Map of symbols;
+    std::map<SymbolType, char> symbols;
 };
