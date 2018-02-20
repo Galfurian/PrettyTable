@@ -25,7 +25,7 @@
 #include <sstream>
 #include <iomanip>
 
-/// The structure used to provide a row.
+/// @brief Structure used to manage a row of the table.
 class TableRow :
     public std::vector<std::string>
 {
@@ -81,7 +81,7 @@ public:
     align::align_t alignment;
     /// Column width.
     std::string::size_type width;
-    ///
+    /// If the column needs to autoadjust to the lenght of the content.
     const bool autoAdjust;
 
     /// @brief Constructor.
@@ -146,9 +146,15 @@ public:
     explicit Table(std::string _title) :
         title(std::move(_title)),
         columns(),
-        rows()
+        rows(),
+        marginSize()
     {
         // Nothing to do.
+    }
+
+    inline void setMarginSize(std::string::size_type const & s)
+    {
+        marginSize = s;
     }
 
     /// @brief Allows to add a column.
@@ -162,7 +168,7 @@ public:
 
     /// @brief Allows to add a row of values.
     /// @param row The vector which containts the row values.
-    inline void pushRow(TableRow row)
+    inline void addRow(TableRow row)
     {
         if (row.size() != columns.size())
         {
@@ -202,6 +208,16 @@ public:
         }
     }
 
+    inline void addColumnHeaders()
+    {
+        TableRow new_row;
+        for (auto it = columns.begin(); it != columns.end(); ++it)
+        {
+            new_row.emplace_back((*it).getTitle());
+        }
+        rows.emplace_back(new_row);
+    }
+
     inline void addDivider()
     {
         TableRow new_row;
@@ -228,6 +244,9 @@ public:
     /// @return The table.
     std::string getTable()
     {
+        std::string margin = (marginSize > 0) ? std::string(marginSize, ' ')
+                                              : "";
+
         std::stringstream ss;
         for (auto const & row : rows)
         {
@@ -237,6 +256,7 @@ public:
                 for (auto const & column : columns)
                 {
                     ss << std::string(column.width, '-');
+                    ss << std::string(marginSize * 2, '-');
                     ss << "#";
                 }
                 ss << "\n";
@@ -245,8 +265,11 @@ public:
             if (row.isHeader())
             {
                 ss << "#";
-                ss << std::setw(this->getTotalWidth() + columns.size() - 1);
+                ss << margin;
+                ss << std::setw(this->getTotalWidth()
+                                + (marginSize * 2 + 1) * (columns.size() - 1));
                 ss << std::right << align::centtered(row[0]);
+                ss << margin;
                 ss << "#";
                 ss << "\n";
                 continue;
@@ -255,6 +278,7 @@ public:
             for (size_t i = 0; i < row.size(); ++i)
             {
                 auto const & column = columns[i];
+                ss << margin;
                 ss << std::setw(column.width);
                 if (column.alignment == align::left)
                 {
@@ -268,6 +292,7 @@ public:
                 {
                     ss << std::right << align::centtered(row[i]);
                 }
+                ss << margin;
                 ss << "#";
             }
             ss << "\n";
@@ -307,9 +332,9 @@ private:
 
     /// @brief Provides the total width of th table.
     /// @return The total width.
-    inline size_t getTotalWidth() const
+    inline int getTotalWidth() const
     {
-        size_t totalWidth = 0;
+        int totalWidth = 0;
         for (auto const & it : columns)
         {
             totalWidth += it.getWidth();
@@ -342,4 +367,6 @@ private:
     std::vector<TableColumn> columns;
     /// List of rows of the table.
     std::vector<TableRow> rows;
+    /// The internal margins.
+    std::string::size_type marginSize;
 };
