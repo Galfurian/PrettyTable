@@ -4,13 +4,13 @@
 int main(int argc, char ** argv)
 {
     Table table;
-    table.setMarginSize(0);
+    table.setMarginSize(1);
     table.setSymbol(Table::VerticalDivider, '|');
     table.setSymbol(Table::HorizontalDivider, '-');
     table.setSymbol(Table::Crossings, '+');
-    table.addColumn(TableColumn("Name", align::center, 0, true));
-    table.addColumn(TableColumn("Age", align::center, 0, false));
-    table.addColumn(TableColumn("Description", align::center, 0, false));
+    table.addColumn(TableColumn("Name", align::center, 10, true));
+    table.addColumn(TableColumn("Age", align::center, 5, false));
+    table.addColumn(TableColumn("Description", align::center, 50, false));
     table.addDivider();
     table.addHeader("Header 1");
     table.addDivider();
@@ -21,6 +21,8 @@ int main(int argc, char ** argv)
                   "On the other hand, we denounce with righteous indignation and dislike men who are so beguiled and demoralized by the charms of pleasure of the moment, so blinded by desire, that they cannot foresee the pain and trouble that are bound to ensue; and equal blame belongs to those who fail in their duty through weakness of will, which is the same as saying through shrinking from toil and pain. These cases are perfectly simple and easy to distinguish. In a free hour, when our power of choice is untrammeled and when nothing prevents our being able to do what we like best, every pleasure is to be welcomed and every pain avoided. But in certain circumstances and owing to the claims of duty or the obligations of business it will frequently occur that pleasures have to be repudiated and annoyances accepted. The wise man therefore always holds in these matters to this principle of selection: he rejects pleasures to secure other greater pleasures, or else he endures pains to avoid worse pains."});
     table.addDivider();
     table.addHeader("Header 2");
+    table.addDivider();
+    table.addColumnHeaders();
     table.addDivider();
     table.addRow({"Tabita",
                   "24",
