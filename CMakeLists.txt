@@ -3,7 +3,13 @@ project(PrettyTable CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(inc)
+include_directories(
+        ./inc
+        ./inc/table
+        ./inc/utils
+)
 
-add_executable(PrettyTable
-        src/main.cpp)
+add_executable(
+        PrettyTable
+        src/main.cpp
+)

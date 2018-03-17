@@ -1,5 +1,5 @@
 #include <iostream>
-#include "table.hpp"
+#include "table/table.hpp"
 
 int main(int argc, char ** argv)
 {
