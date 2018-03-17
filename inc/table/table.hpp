@@ -198,7 +198,7 @@ public:
                 ss << margin;
                 ss << std::setw(this->getTotalWidth()
                                 + (marginSize * 2 + 1) * (columns.size() - 1));
-                ss << std::right << align::centtered(row[0]);
+                ss << std::right << align::centered(row[0]);
                 ss << margin;
                 ss << vdiv;
                 ss << "\n";
@@ -220,7 +220,7 @@ public:
                 }
                 else
                 {
-                    ss << std::right << align::centtered(row[i]);
+                    ss << std::right << align::centered(row[i]);
                 }
                 ss << margin;
                 ss << vdiv;
