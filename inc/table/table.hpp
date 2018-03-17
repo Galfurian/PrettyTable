@@ -19,121 +19,13 @@
 
 #pragma once
 
-#include "align.hpp"
+#include "stringUtils.hpp"
+#include "tableColumn.hpp"
+#include "tableRow.hpp"
 
-#include <vector>
 #include <sstream>
-#include <iomanip>
 #include <map>
-
-/// @brief Structure used to manage a row of the table.
-class TableRow :
-    public std::vector<std::string>
-{
-public:
-    TableRow() :
-        divider(),
-        header()
-    {
-        // Nothing to do.
-    }
-
-    TableRow(std::vector<std::string>::size_type const & size,
-             std::string const & initializer) :
-        std::vector<std::string>(size, initializer),
-        divider(),
-        header()
-    {
-        // Nothing to do.
-    }
-
-    TableRow(std::initializer_list<std::string> const & initializer) :
-        std::vector<std::string>(initializer),
-        divider(),
-        header()
-    {
-        // Nothing to do.
-    }
-
-    virtual inline bool isDivider() const
-    {
-        return divider;
-    }
-
-    virtual inline bool isHeader() const
-    {
-        return header;
-    }
-
-private:
-    bool divider;
-    bool header;
-
-    friend class Table;
-};
-
-/// @brief A class which provide access and means to manage a table column.
-class TableColumn
-{
-public:
-    /// Column Title.
-    std::string title;
-    /// Column alignment.
-    align::align_t alignment;
-    /// Column width.
-    std::string::size_type width;
-    /// If the column needs to autoadjust to the lenght of the content.
-    const bool autoAdjust;
-
-    /// @brief Constructor.
-    /// @param _title     The column title.
-    /// @param _alignment The column alignment.
-    /// @param _width     The column width.
-    TableColumn(std::string _title,
-                align::align_t _alignment,
-                std::string::size_type _width,
-                const bool _autoAdjust) :
-        title(std::move(_title)),
-        alignment(_alignment),
-        width(_width),
-        autoAdjust(_autoAdjust)
-    {
-        if (autoAdjust)
-        {
-            this->adjust(title);
-        }
-    }
-
-    /// @brief Provide access to the title of the column.
-    /// @return The title of the column
-    inline std::string getTitle() const
-    {
-        return title;
-    }
-
-    /// @brief Provides the width of the column.
-    /// @return The width of the column.
-    inline std::string::size_type getWidth() const
-    {
-        return width;
-    }
-
-    /// @brief Provides access to the allignment of the column.
-    /// @return The allignment of the column.
-    inline align::align_t getAlignment()
-    {
-        return alignment;
-    }
-
-    inline void adjust(std::string const & reference)
-    {
-        if (autoAdjust)
-        {
-            auto _width = reference.size();
-            if (_width > width) width = _width;
-        }
-    }
-};
+#include <iomanip>
 
 /// @brief A simple formatted table.
 class Table
@@ -209,7 +101,8 @@ public:
             }
             else if (cell.size() > column_it->width)
             {
-                auto wrappedText = this->textWrap(cell, column_it->width);
+                auto wrappedText =
+                    StringUtils::text_wrap(cell, column_it->width);
                 if (wrappedText.size() > new_rows.size())
                 {
                     new_rows.resize(wrappedText.size(),
@@ -283,10 +176,10 @@ public:
                     (std::next(row_it) == rows.end()))
                 {
                     ss << std::string(
-                        this->getTotalWidth()
-                        + (marginSize * 2 + 1) * (columns.size() - 1),
-                        hdiv);
-                    ss << cross;
+                        getTotalWidth() +
+                        (columns.size() - 1) +
+                        columns.size() * marginSize * 2, hdiv)
+                       << cross;
                 }
                 else
                 {
@@ -337,38 +230,6 @@ public:
         return ss.str();
     }
 
-    /// @brief Wraps the given text.
-    /// @param in    The input text.
-    /// @param width The width of the desired text.
-    /// @return The wrapped lines of the original text.
-    std::vector<std::string> textWrap(std::string const & in,
-                                      std::string::size_type const & width)
-    {
-        auto words = this->splitString(in, " ");
-        std::vector<std::string> out;
-        std::string tmp;
-        for (auto it = words.begin(); it != words.end(); ++it)
-        {
-            auto word = (*it);
-            if ((tmp.size() + word.size()) > width)
-            {
-                out.emplace_back(tmp);
-                tmp.clear();
-            }
-            tmp += word;
-            if ((std::next(it) != words.end()) &&
-                (tmp.size() < width))
-            {
-                tmp.push_back(' ');
-            }
-        }
-        if (!tmp.empty())
-        {
-            out.emplace_back(tmp);
-        }
-        return out;
-    }
-
 private:
 
     /// @brief Provides the total width of th table.
@@ -381,26 +242,6 @@ private:
             totalWidth += it.getWidth();
         }
         return totalWidth;
-    }
-
-    /// @brief Splits the given string.
-    std::vector<std::string> splitString(
-        const std::string & source,
-        const std::string & delimiter)
-    {
-        std::vector<std::string> result;
-        size_t pos = 0;
-        std::string tmp = source;
-        while ((pos = tmp.find(delimiter)) != std::string::npos)
-        {
-            result.push_back(tmp.substr(0, pos));
-            tmp.erase(0, pos + delimiter.length());
-        }
-        if (!tmp.empty())
-        {
-            result.push_back(tmp);
-        }
-        return result;
     }
 
     /// List of columns of the table.
